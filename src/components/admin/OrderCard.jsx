@@ -1,5 +1,3 @@
-import { useEffect, useRef } from "react";
-
 /* ─────────────────────────────────────────────
    Download helpers  (jsPDF + SheetJS via CDN)
 ───────────────────────────────────────────── */

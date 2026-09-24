@@ -5,7 +5,7 @@ const OrderTracking = ({ socket, onShowNotification }) => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(orderId));
 
   // ✅ FIX: Moved above useEffect so it's declared before use
   const getStatusMessage = (status) => {
@@ -49,7 +49,15 @@ const OrderTracking = ({ socket, onShowNotification }) => {
   };
 
   useEffect(() => {
-    if (!socket || !orderId) return;
+    if (!orderId) {
+      return;
+    }
+    if (!socket?.connected) {
+      onShowNotification('Live tracking is currently unavailable. Please try again shortly.', 'error');
+      return;
+    }
+
+    queueMicrotask(() => setLoading(true));
 
     socket.emit('trackOrder', { orderId }, (response) => {
       setLoading(false);
@@ -113,6 +121,10 @@ const OrderTracking = ({ socket, onShowNotification }) => {
   }, [socket, orderId, navigate, onShowNotification]);
 
   const handleCancelOrder = () => {
+    if (!socket?.connected) {
+      onShowNotification('The ordering service is offline. Please try again shortly.', 'error');
+      return;
+    }
     if (!window.confirm('Are you sure you want to cancel this order?')) return;
     const reason = prompt('Reason for cancellation (optional):') || 'No reason provided';
     socket.emit('cancelOrder', { orderId, reason }, (response) => {

@@ -6,6 +6,7 @@ import { useSocket } from './hooks/useSocket';
 // Common Components
 import Notification from './components/common/Notification';
 import Header from './components/common/Header';
+import ThemeToggle from './components/common/ThemeToggle';
 
 // Customer Components
 import Menu from './components/customer/Menu';
@@ -23,6 +24,7 @@ function App() {
   const [cart, setCart] = useState([]);
   const [notification, setNotification] = useState(null);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
   // Load cart from localStorage
   useEffect(() => {
@@ -47,6 +49,11 @@ function App() {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   // Show notification helper
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type });
@@ -54,10 +61,10 @@ function App() {
 
   // Cart functions
   const addToCart = (item) => {
-    const existingItem = cart.find(cartItem => cartItem.id === item.id);
-    
+    const existingItem = cart.find((cartItem) => cartItem.id === item.id);
+
     if (existingItem) {
-      setCart(cart.map(cartItem =>
+      setCart(cart.map((cartItem) =>
         cartItem.id === item.id
           ? { ...cartItem, quantity: cartItem.quantity + 1 }
           : cartItem
@@ -92,6 +99,8 @@ function App() {
     }
   };
 
+  const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
+
   // Admin functions
   const handleAdminLogin = () => {
     setIsAdminLoggedIn(true);
@@ -121,7 +130,7 @@ function App() {
             path="/"
             element={
               <>
-                <Header cartCount={cart.length} connected={connected} />
+                <Header cartCount={cartItemCount} connected={connected} theme={theme} onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
                 <Menu onAddToCart={addToCart} />
               </>
             }
@@ -131,7 +140,7 @@ function App() {
             path="/cart"
             element={
               <>
-                <Header cartCount={cart.length} connected={connected} />
+                <Header cartCount={cartItemCount} connected={connected} theme={theme} onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
                 <Cart
                   cart={cart}
                   onUpdateQuantity={updateQuantity}
@@ -146,7 +155,7 @@ function App() {
             path="/checkout"
             element={
               <>
-                <Header cartCount={cart.length} connected={connected} />
+                <Header cartCount={cartItemCount} connected={connected} theme={theme} onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
                 <OrderForm
                   cart={cart}
                   socket={socket}
@@ -160,7 +169,7 @@ function App() {
             path="/track/:orderId"
             element={
               <>
-                <Header cartCount={cart.length} connected={connected} />
+                <Header cartCount={cartItemCount} connected={connected} theme={theme} onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
                 <OrderTracking
                   socket={socket}
                   onShowNotification={showNotification}
@@ -173,7 +182,7 @@ function App() {
             path="/orders"
             element={
               <>
-                <Header cartCount={cart.length} connected={connected} />
+                <Header cartCount={cartItemCount} connected={connected} theme={theme} onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
                 <OrderHistory
                   socket={socket}
                   onShowNotification={showNotification}
@@ -191,12 +200,16 @@ function App() {
                   socket={socket}
                   onShowNotification={showNotification}
                   onLogout={handleAdminLogout}
+                  theme={theme}
+                  onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
                 />
               ) : (
                 <AdminLogin
                   socket={socket}
                   onLoginSuccess={handleAdminLogin}
                   onShowNotification={showNotification}
+                  theme={theme}
+                  onToggleTheme={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
                 />
               )
             }

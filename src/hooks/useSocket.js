@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
 
 export const useSocket = () => {
   const socketRef = useRef(null);
@@ -10,32 +10,29 @@ export const useSocket = () => {
 
   useEffect(() => {
     // Create socket connection
-    socketRef.current = io(SOCKET_URL, {
+    const socket = io(SOCKET_URL, {
       transports: ["websocket", "polling"],
+      timeout: 8000,
     });
+    socketRef.current = socket;
 
     // Connection event
-    socketRef.current.on("connect", () => {
+    socket.on("connect", () => {
       setConnected(true);
-      console.log("✅ Connected to server:", socketRef.current.id);
     });
 
     // Disconnection event
-    socketRef.current.on("disconnect", () => {
+    socket.on("disconnect", () => {
       setConnected(false);
-      console.log("❌ Disconnected from server");
     });
 
     // Server welcome message
-    socketRef.current.on("connected", (data) => {
-      console.log("📨 Server message:", data.message);
-    });
+    socket.on("connect_error", () => setConnected(false));
 
     // Cleanup on unmount
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+      socket.disconnect();
+      socketRef.current = null;
     };
   }, []);
 
